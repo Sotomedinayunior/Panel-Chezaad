@@ -1,0 +1,21 @@
+{
+  "code": "chezaad.ponches",
+  "version": "1",
+  "name": {
+    "en": "Chezaad Ponches",
+    "es": "Ponches en Vivo Chezaad"
+  },
+  "description": {
+    "en": "Live employee time dashboard using Bitrix24",
+    "es": "Dashboard en vivo de los ponches de empleados con Bitrix24"
+  },
+  "locations": [
+    {
+      "placement": "default",
+      "handler": "https://tu-dominio.com/ponches.html",
+      "title": "Dashboard de Ponches"
+    }
+  ],
+  "type": "local",
+  "auth": "N"
+}
