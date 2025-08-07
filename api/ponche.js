@@ -20,7 +20,7 @@ export default function handler(req, res) {
   </style>
 </head>
 <body>
-  <img src="public/Logo.png" alt="Logo Chezaad" width="200" height="40">
+  <img src="Logo.png" alt="Logo Chezaad" width="200" height="40">
   <p>Mostrando estado de la jornada de todos los empleados activos</p>
 
   <table>
