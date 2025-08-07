@@ -12,7 +12,7 @@
   "locations": [
     {
       "placement": "default",
-      "handler": "https://tu-dominio.com/ponches.html",
+      "handler": "https://panel-chezaad.vercel.app/",
       "title": "Dashboard de Ponches"
     }
   ],
