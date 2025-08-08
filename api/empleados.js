@@ -1,7 +1,8 @@
 export default function handler(req, res) {
   if (req.method === 'GET' || req.method === 'POST') {
     res.setHeader('Content-Type', 'text/html');
-    res.status(200).send(`<!DOCTYPE html>
+    res.status(200).send(`
+<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
@@ -114,9 +115,8 @@ export default function handler(req, res) {
 </div>
 
 <script>
-/** CONFIG **/
 const webhookBase = "https://chezaad-nfr.bitrix24.com/rest/435/7ywb7o58ugno9e0t/";
-const SUPERVISOR_IDS = ['1']; 
+const SUPERVISOR_IDS = ['1'];
 const SUPERVISOR_GROUP_ID = '';
 
 let usuarioActualId = null;
@@ -127,7 +127,7 @@ let cacheEmpleado = null;
 function toTime(t) {
   try { return t ? new Date(t).toLocaleTimeString() : '—'; } catch(e) { return '—'; }
 }
-function esUrl(str){ return typeof str === 'string' && /^https?:\/\//i.test(str); }
+function esUrl(str){ return typeof str === 'string' && /^https?:\\/\\//i.test(str); }
 
 async function obtenerUsuarioActual() {
   const container = document.getElementById("cardContainer");
@@ -148,7 +148,6 @@ async function obtenerUsuarioActual() {
 async function obtenerUsuario(id) {
   const container = document.getElementById("cardContainer");
   container.innerHTML = "<p>Cargando...</p>";
-
   try {
     const res = await fetch(webhookBase + \`user.get.json?ID=\${id}\`);
     const data = await res.json();
@@ -170,14 +169,12 @@ async function obtenerUsuario(id) {
         estadoClase = abierto ? "estado-ok" : "estado-off";
         inicio = toTime(st.TIME_START);
         fin = toTime(st.TIME_FINISH);
-
         if (abierto && st.TIME_START) {
           const diffHrs = (new Date() - new Date(st.TIME_START)) / 36e5;
           horas = Math.floor(diffHrs) + " hrs";
         } else if (st.DURATION) {
           horas = Math.floor(parseFloat(st.DURATION)) + " hrs";
         }
-
         boton = abierto
           ? \`<button class="salir" onclick="abrirModal()">Salir</button>\`
           : \`<button class="ingresar" onclick="marcarPonche('ingresar', \${emp.ID})">Ingresar</button>\`;
@@ -220,7 +217,6 @@ async function enviarSalida() {
     alert("Por favor escribe un reporte antes de salir.");
     return;
   }
-
   try {
     await enviarReportePrivadoBitrix(reporte);
   } catch (e) {
@@ -228,7 +224,6 @@ async function enviarSalida() {
     alert("❌ No se pudo enviar el reporte a Bitrix. Intenta de nuevo.");
     return;
   }
-
   try {
     await marcarPonche('salir', usuarioActualId);
   } catch (e) {
@@ -236,7 +231,6 @@ async function enviarSalida() {
     alert("❌ El reporte se envió, pero no se pudo marcar la salida.");
     return;
   }
-
   cerrarModal();
   alert("✅ Reporte enviado y salida marcada");
   obtenerUsuario(usuarioActualId);
@@ -244,25 +238,17 @@ async function enviarSalida() {
 
 async function enviarReportePrivadoBitrix(reporte) {
   const titulo = \`Reporte de salida - \${usuarioNombre}\`.trim();
-  const mensaje = \`🕒 Reporte generado al marcar salida\n\n\${reporte}\n\n— Usuario: \${usuarioNombre} (\${usuarioEmail})\`;
-
+  const mensaje = \`🕒 Reporte generado al marcar salida\\n\\n\${reporte}\\n\\n— Usuario: \${usuarioNombre} (\${usuarioEmail})\`;
   const fd = new FormData();
   fd.append("POST_TITLE", titulo);
   fd.append("POST_MESSAGE", mensaje);
-
   (SUPERVISOR_IDS || []).forEach(uid => {
     if (uid) fd.append("SPERM[U][]", String(uid));
   });
-
   if (SUPERVISOR_GROUP_ID) {
     fd.append("SPERM[SG][]", String(SUPERVISOR_GROUP_ID));
   }
-
-  const resp = await fetch(webhookBase + "log.blogpost.add", {
-    method: "POST",
-    body: fd
-  });
-
+  const resp = await fetch(webhookBase + "log.blogpost.add", { method: "POST", body: fd });
   const json = await resp.json();
   if (!json || json.error) {
     console.error("Bitrix error:", json);
@@ -285,7 +271,7 @@ obtenerUsuarioActual();
 
 </body>
 </html>
-`);
+    `);
   } else {
     res.status(405).send('Método no permitido');
   }
