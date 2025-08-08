@@ -153,6 +153,30 @@
       });
     });
 
+    async function marcarPonche(accion, userId) {
+  // Si es salir, preguntar primero
+  if (accion === 'salir') {
+    const confirmar = confirm("¿Seguro que quieres marcar salida?");
+    if (!confirmar) {
+      return; // Cancelar si el usuario no confirma
+    }
+  }
+
+  const endpoint = accion === 'ingresar' ? 'timeman.open.json' : 'timeman.close.json';
+  const url = `${webhookBase}${endpoint}?user_id=${userId}`;
+
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    alert(`✅ Ponche ${accion === 'ingresar' ? 'iniciado' : 'finalizado'} correctamente`);
+    obtenerTodosLosPonches();
+  } catch (err) {
+    console.error("Error al marcar ponche:", err);
+    alert("❌ Error inesperado");
+  }
+}
+
+
     obtenerTodosLosPonches();
     setInterval(obtenerTodosLosPonches, 60000);
   </script>
