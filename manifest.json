@@ -1,6 +1,6 @@
 {
   "code": "chezaad.ponches",
-  "version": "1",
+  "version": "1.0.0",
   "name": {
     "en": "Chezaad Ponches",
     "es": "Ponches en Vivo Chezaad"
@@ -9,13 +9,14 @@
     "en": "Live employee time dashboard using Bitrix24",
     "es": "Dashboard en vivo de los ponches de empleados con Bitrix24"
   },
+  "type": "local",
+  "auth": "Y",
+  "access": ["user", "admin"],
   "locations": [
     {
-      "placement": "default",
+      "placement": "PLACEMENT_APPLICATION_MENU",
       "handler": "https://panel-chezaad.vercel.app/",
       "title": "Dashboard de Ponches"
     }
-  ],
-  "type": "local",
-  "auth": "N"
+  ]
 }
