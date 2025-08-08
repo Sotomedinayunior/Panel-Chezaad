@@ -18,14 +18,24 @@ export default function handler(req, res) {
     button.ingresar { background-color: #28a745; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; }
     button.salir { background-color: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; }
     #searchInput { margin-bottom: 15px; padding: 8px; width: 300px; border: 1px solid #ccc; border-radius: 4px; }
+    .Ponche-Head{
+       display:flex;
+       justify-content: space-between; 
+        align-items: end; 
+
+    }
   </style>
 </head>
 <body>
-  <img src="Logo.png" alt="Logo Chezaad" width="200" height="40">
-  <p>Mostrando estado de la jornada de todos los empleados activos</p>
-
+ <div class="Ponche-Head">
+    <div>
+    <img src="Logo.png" alt="Logo Chezaad" width="200" height="40">
+    <p>Mostrando estado de la jornada de todos los empleados activos</p>
+  </div>
+   <div styles="">
   <input type="text" id="searchInput" placeholder="Buscar por nombre o email..." />
-
+  </div>
+  </div>
   <table>
     <thead>
       <tr>
@@ -72,15 +82,16 @@ export default function handler(req, res) {
               inicio = st.TIME_START ? new Date(st.TIME_START).toLocaleTimeString() : "—";
               fin = st.TIME_FINISH ? new Date(st.TIME_FINISH).toLocaleTimeString() : "—";
 
-              if (st.STATUS === "OPENED" && st.TIME_START) {
+            if (st.STATUS === "OPENED" && st.TIME_START) {
                 const start = new Date(st.TIME_START);
                 const now = new Date();
                 const diffMs = now - start;
                 const diffHrs = diffMs / (1000 * 60 * 60);
-                horas = diffHrs.toFixed(2) + " hrs";
-              } else if (st.DURATION) {
-                horas = parseFloat(st.DURATION).toFixed(2) + " hrs";
-              }
+                horas = Math.floor(diffHrs) + " hrs"; // Redondea hacia abajo
+            } else if (st.DURATION) {
+                horas = Math.floor(parseFloat(st.DURATION)) + " hrs"; // Redondea hacia abajo
+            }
+
 
               accionBtn = st.STATUS === "OPENED"
                 ? \`<button class="salir" onclick="marcarPonche('salir', \${emp.ID})">Salir</button>\`
