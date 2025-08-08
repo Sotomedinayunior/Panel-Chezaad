@@ -17,11 +17,14 @@ export default function handler(req, res) {
     .status-error { color: gray; }
     button.ingresar { background-color: #28a745; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; }
     button.salir { background-color: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; }
+    #searchInput { margin-bottom: 15px; padding: 8px; width: 300px; border: 1px solid #ccc; border-radius: 4px; }
   </style>
 </head>
 <body>
   <img src="Logo.png" alt="Logo Chezaad" width="200" height="40">
   <p>Mostrando estado de la jornada de todos los empleados activos</p>
+
+  <input type="text" id="searchInput" placeholder="Buscar por nombre o email..." />
 
   <table>
     <thead>
@@ -131,6 +134,17 @@ export default function handler(req, res) {
         alert("❌ Error inesperado");
       }
     }
+
+    // Filtro de búsqueda
+    document.getElementById("searchInput").addEventListener("input", function() {
+      const filter = this.value.toLowerCase();
+      const rows = document.querySelectorAll("#poncheInfo tr");
+      rows.forEach(row => {
+        const name = row.cells[0]?.textContent.toLowerCase() || "";
+        const email = row.cells[1]?.textContent.toLowerCase() || "";
+        row.style.display = (name.includes(filter) || email.includes(filter)) ? "" : "none";
+      });
+    });
 
     obtenerTodosLosPonches();
     setInterval(obtenerTodosLosPonches, 60000);

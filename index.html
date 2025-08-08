@@ -2,60 +2,25 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  
   <title>Panel Chezaad</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f0f2f5;
-      padding: 30px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: #fff;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    th, td {
-      padding: 12px;
-      border: 1px solid #ddd;
-      text-align: left;
-    }
-    th {
-      background: #0077cc;
-      color: #fff;
-    }
-    .status-ok {
-      color: green;
-    }
-    .status-off {
-      color: red;
-    }
-    .status-error {
-      color: gray;
-    }
-    button.ingresar {
-      background-color: #28a745;
-      color: white;
-      border: none;
-      padding: 8px 12px;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    button.salir {
-      background-color: #dc3545;
-      color: white;
-      border: none;
-      padding: 8px 12px;
-      border-radius: 4px;
-      cursor: pointer;
-    }
+    body { font-family: Arial, sans-serif; background: #f0f2f5; padding: 30px; }
+    table { width: 100%; border-collapse: collapse; background: #fff; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
+    th { background: #0077cc; color: #fff; }
+    .status-ok { color: green; }
+    .status-off { color: red; }
+    .status-error { color: gray; }
+    button.ingresar { background-color: #28a745; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; }
+    button.salir { background-color: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; }
+    #searchInput { margin-bottom: 15px; padding: 8px; width: 300px; border: 1px solid #ccc; border-radius: 4px; }
   </style>
 </head>
 <body>
-  <!-- Lo ideal es que el logo fuera dinamico es decir que tome el del proyecto  -->
   <img src="Logo.png" alt="Logo Chezaad" width="200" height="40">
   <p>Mostrando estado de la jornada de todos los empleados activos</p>
+
+  <input type="text" id="searchInput" placeholder="Buscar por nombre o email..." />
 
   <table>
     <thead>
@@ -84,7 +49,6 @@
       try {
         const res = await fetch(webhookBase + "user.get.json");
         const data = await res.json();
-
         const empleados = data.result.filter(user => user.ACTIVE === true);
 
         for (const emp of empleados) {
@@ -101,7 +65,6 @@
 
               estado = st.STATUS === "OPENED" ? "En línea" : "Fuera";
               estadoClase = st.STATUS === "OPENED" ? "status-ok" : "status-off";
-
               inicio = st.TIME_START ? new Date(st.TIME_START).toLocaleTimeString() : "—";
               fin = st.TIME_FINISH ? new Date(st.TIME_FINISH).toLocaleTimeString() : "—";
 
@@ -160,22 +123,27 @@
       try {
         const res = await fetch(url);
         const data = await res.json();
-if (data.result === true || data.result === null) {
-  alert(`✅ Ponche ${accion === 'ingresar' ? 'iniciado' : 'finalizado'} correctamente`);
-} else {
-  alert(`✅ Ponche ${accion === 'ingresar' ? 'iniciado' : 'finalizado'} correctamente`);
-}
-
-
-        obtenerTodosLosPonches(); // refrescar
+        alert(`✅ Ponche ${accion === 'ingresar' ? 'iniciado' : 'finalizado'} correctamente`);
+        obtenerTodosLosPonches();
       } catch (err) {
         console.error("Error al marcar ponche:", err);
         alert("❌ Error inesperado");
       }
     }
 
-    obtenerTodosLosPonches(); // Cargar al inicio
-    setInterval(obtenerTodosLosPonches, 60000); // Actualizar cada 60s
+    // Filtro de búsqueda
+    document.getElementById("searchInput").addEventListener("input", function() {
+      const filter = this.value.toLowerCase();
+      const rows = document.querySelectorAll("#poncheInfo tr");
+      rows.forEach(row => {
+        const name = row.cells[0]?.textContent.toLowerCase() || "";
+        const email = row.cells[1]?.textContent.toLowerCase() || "";
+        row.style.display = (name.includes(filter) || email.includes(filter)) ? "" : "none";
+      });
+    });
+
+    obtenerTodosLosPonches();
+    setInterval(obtenerTodosLosPonches, 60000);
   </script>
 </body>
 </html>
