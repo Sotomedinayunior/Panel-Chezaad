@@ -7,6 +7,9 @@ export default function handler(req, res) {
 <head>
 <meta charset="UTF-8" />
 <title>Mi Ponche</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<!-- SDK de Bitrix (obligatorio en apps iframe) -->
+<script src="https://api.bitrix24.com/api/v1/"></script>
 <style>
   body {
     font-family: Arial, sans-serif;
@@ -31,16 +34,11 @@ export default function handler(req, res) {
     margin-bottom: 10px;
     border: 2px solid #eee;
   }
-  h3 {
-    margin: 6px 0 2px;
-  }
+  h3 { margin: 6px 0 2px; }
   .estado-ok { color: #28a745; font-weight: bold; }
   .estado-off { color: #dc3545; font-weight: bold; }
   .estado-error { color: gray; font-weight: bold; }
-  .info {
-    font-size: 14px;
-    margin: 4px 0;
-  }
+  .info { font-size: 14px; margin: 4px 0; }
   button.ingresar, button.salir {
     border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; margin-top: 12px; font-weight: 600;
   }
@@ -64,12 +62,8 @@ export default function handler(req, res) {
     max-width: 480px;
     width: 100%;
   }
-  .modal-header {
-    font-weight: 700; font-size: 18px; margin-bottom: 8px;
-  }
-  .modal-sub {
-    color: #555; font-size: 14px; margin-bottom: 10px;
-  }
+  .modal-header { font-weight: 700; font-size: 18px; margin-bottom: 8px; }
+  .modal-sub { color: #555; font-size: 14px; margin-bottom: 10px; }
   .modal-content textarea {
     width: 100%;
     height: 110px;
@@ -80,18 +74,10 @@ export default function handler(req, res) {
     border-radius: 6px;
     font-family: inherit;
   }
-  .modal-actions {
-    display: flex; gap: 8px; justify-content: flex-end; margin-top: 6px;
-  }
-  .btn-cancel {
-    background: #6c757d; color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer;
-  }
-  .btn-send {
-    background: #dc3545; color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 700;
-  }
-  .small {
-    font-size: 12px; color: #777; margin-top: 6px;
-  }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 6px; }
+  .btn-cancel { background: #6c757d; color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; }
+  .btn-send { background: #dc3545; color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 700; }
+  .small { font-size: 12px; color: #777; margin-top: 6px; }
 </style>
 </head>
 <body>
@@ -115,158 +101,129 @@ export default function handler(req, res) {
 </div>
 
 <script>
-const webhookBase = "https://chezaad-nfr.bitrix24.com/rest/435/7ywb7o58ugno9e0t/";
-const SUPERVISOR_IDS = ['1'];
-const SUPERVISOR_GROUP_ID = '';
+/** Configuración de destinos del reporte (opcional) */
+const SUPERVISOR_IDS = ['1'];   // IDs de usuarios que verán el post (privado). Vacío = visibilidad por defecto.
+const SUPERVISOR_GROUP_ID = ''; // ID de grupo (Social Network). Vacío = no se envía a grupo.
 
-let usuarioActualId = null;
-let usuarioNombre = "";
-let usuarioEmail = "";
-let cacheEmpleado = null;
+let usuarioActual = null;
 
 function toTime(t) {
   try { return t ? new Date(t).toLocaleTimeString() : '—'; } catch(e) { return '—'; }
 }
 function esUrl(str){ return typeof str === 'string' && /^https?:\\/\\//i.test(str); }
 
-async function obtenerUsuarioActual() {
-  const container = document.getElementById("cardContainer");
-  try {
-    const res = await fetch(webhookBase + "profile.json");
-    const data = await res.json();
-    if (!data?.result?.ID) throw new Error('No se obtuvo el profile');
-    usuarioActualId = data.result.ID;
-    usuarioNombre = (data.result.NAME || '') + ' ' + (data.result.LAST_NAME || '');
-    usuarioEmail = data.result.EMAIL || '';
-    await obtenerUsuario(usuarioActualId);
-  } catch (err) {
-    console.error(err);
-    container.innerHTML = "<p>❌ Error al obtener el usuario actual</p>";
+function render(emp, st){
+  const cont = document.getElementById('cardContainer');
+  if(!st){ cont.innerHTML = '<p>❌ No se pudo leer timeman.status</p>'; return; }
+
+  const abierto = st.STATUS === 'OPENED';
+  const estado = abierto ? 'En línea' : 'Fuera';
+  const clase  = abierto ? 'estado-ok' : 'estado-off';
+  const inicio = toTime(st.TIME_START);
+  const fin    = toTime(st.TIME_FINISH);
+  let horas = '—';
+  if (abierto && st.TIME_START) {
+    const diffHrs = (new Date() - new Date(st.TIME_START)) / 36e5;
+    horas = Math.floor(diffHrs) + ' hrs';
+  } else if (st.DURATION) {
+    horas = Math.floor(parseFloat(st.DURATION)) + ' hrs';
   }
+
+  const foto = esUrl(emp.PERSONAL_PHOTO) ? emp.PERSONAL_PHOTO : 'https://via.placeholder.com/88';
+  cont.innerHTML = \`
+    <div class="card">
+      <img src="\${foto}" alt="Foto">
+      <h3>\${(emp.NAME||'')} \${(emp.LAST_NAME||'')}</h3>
+      <div class="\${clase}">\${estado}</div>
+      <p class="info">Inicio: \${inicio}</p>
+      <p class="info">Fin: \${fin}</p>
+      <p class="info">Horas: \${horas}</p>
+      \${abierto
+        ? \`<button class="salir" onclick="abrirModal()">Salir</button>\`
+        : \`<button class="ingresar" onclick="marcarPonche('ingresar')">Ingresar</button>\`}
+    </div>\`;
 }
 
-async function obtenerUsuario(id) {
-  const container = document.getElementById("cardContainer");
-  container.innerHTML = "<p>Cargando...</p>";
-  try {
-    const res = await fetch(webhookBase + \`user.get.json?ID=\${id}\`);
-    const data = await res.json();
-    const emp = data?.result?.[0];
-    if (!emp) { container.innerHTML = "<p>❌ Usuario no encontrado</p>"; return; }
-    cacheEmpleado = emp;
-
-    let estado = "Sin acceso", inicio = "—", fin = "—", horas = "—";
-    let estadoClase = "estado-error";
-    let boton = "";
-
-    try {
-      const statusRes = await fetch(webhookBase + \`timeman.status.json?user_id=\${emp.ID}\`);
-      const statusData = await statusRes.json();
-      if (statusData?.result) {
-        const st = statusData.result;
-        const abierto = st.STATUS === "OPENED";
-        estado = abierto ? "En línea" : "Fuera";
-        estadoClase = abierto ? "estado-ok" : "estado-off";
-        inicio = toTime(st.TIME_START);
-        fin = toTime(st.TIME_FINISH);
-        if (abierto && st.TIME_START) {
-          const diffHrs = (new Date() - new Date(st.TIME_START)) / 36e5;
-          horas = Math.floor(diffHrs) + " hrs";
-        } else if (st.DURATION) {
-          horas = Math.floor(parseFloat(st.DURATION)) + " hrs";
-        }
-        boton = abierto
-          ? \`<button class="salir" onclick="abrirModal()">Salir</button>\`
-          : \`<button class="ingresar" onclick="marcarPonche('ingresar', \${emp.ID})">Ingresar</button>\`;
-      }
-    } catch (e) {
-      console.warn("No se pudo leer timeman:", e);
-    }
-
-    const foto = esUrl(emp.PERSONAL_PHOTO) ? emp.PERSONAL_PHOTO : 'https://via.placeholder.com/88';
-
-    container.innerHTML = \`
-      <div class="card">
-        <img src="\${foto}" alt="Foto">
-        <h3>\${emp.NAME || ''} \${emp.LAST_NAME || ''}</h3>
-        <div class="\${estadoClase}">\${estado}</div>
-        <p class="info">Inicio: \${inicio}</p>
-        <p class="info">Fin: \${fin}</p>
-        <p class="info">Horas: \${horas}</p>
-        \${boton}
-      </div>
-    \`;
-  } catch (error) {
-    console.error(error);
-    container.innerHTML = "<p>❌ Error al cargar usuario</p>";
-  }
-}
-
-function abrirModal() {
+function abrirModal(){
   document.getElementById("modalSalida").style.display = "flex";
-  document.getElementById("reporteSalida").value = "";
-  document.getElementById("reporteSalida").focus();
+  const t = document.getElementById("reporteSalida");
+  t.value = "";
+  t.focus();
 }
-function cerrarModal() {
+function cerrarModal(){
   document.getElementById("modalSalida").style.display = "none";
 }
 
-async function enviarSalida() {
-  const reporte = (document.getElementById("reporteSalida").value || "").trim();
-  if (!reporte) {
-    alert("Por favor escribe un reporte antes de salir.");
-    return;
-  }
-  try {
-    await enviarReportePrivadoBitrix(reporte);
-  } catch (e) {
-    console.error("Error enviando reporte:", e);
-    alert("❌ No se pudo enviar el reporte a Bitrix. Intenta de nuevo.");
-    return;
-  }
-  try {
-    await marcarPonche('salir', usuarioActualId);
-  } catch (e) {
-    console.error("Error marcando salida:", e);
-    alert("❌ El reporte se envió, pero no se pudo marcar la salida.");
-    return;
-  }
-  cerrarModal();
-  alert("✅ Reporte enviado y salida marcada");
-  obtenerUsuario(usuarioActualId);
+function errorUI(msg){
+  document.getElementById('cardContainer').innerHTML = \`<p>❌ \${msg}</p>\`;
 }
 
-async function enviarReportePrivadoBitrix(reporte) {
-  const titulo = \`Reporte de salida - \${usuarioNombre}\`.trim();
-  const mensaje = \`🕒 Reporte generado al marcar salida\\n\\n\${reporte}\\n\\n— Usuario: \${usuarioNombre} (\${usuarioEmail})\`;
-  const fd = new FormData();
-  fd.append("POST_TITLE", titulo);
-  fd.append("POST_MESSAGE", mensaje);
-  (SUPERVISOR_IDS || []).forEach(uid => {
-    if (uid) fd.append("SPERM[U][]", String(uid));
+function cargar(){
+  // Inicializa el contexto del iframe dentro de Bitrix
+  BX24.init(function(){
+    // 1) Usuario actual (token del usuario logueado)
+    BX24.callMethod('user.current', {}, function(uRes){
+      if(uRes.error()){ console.error(uRes.error()); return errorUI('No se pudo leer user.current'); }
+      usuarioActual = uRes.data();
+      // 2) Estado timeman del propio usuario (sin user_id)
+      BX24.callMethod('timeman.status', {}, function(stRes){
+        if(stRes.error()){ console.error(stRes.error()); return errorUI('No se pudo leer timeman.status'); }
+        render(usuarioActual, stRes.data());
+      });
+    });
   });
-  if (SUPERVISOR_GROUP_ID) {
-    fd.append("SPERM[SG][]", String(SUPERVISOR_GROUP_ID));
-  }
-  const resp = await fetch(webhookBase + "log.blogpost.add", { method: "POST", body: fd });
-  const json = await resp.json();
-  if (!json || json.error) {
-    console.error("Bitrix error:", json);
-    throw new Error(json?.error_description || "Fallo en log.blogpost.add");
-  }
 }
 
-async function marcarPonche(accion, id) {
-  const endpoint = accion === 'ingresar' ? 'timeman.open.json' : 'timeman.close.json';
-  const url = \`\${webhookBase}\${endpoint}?user_id=\${id}\`;
-  const res = await fetch(url);
-  const data = await res.json();
-  if (!data || data.error) {
-    throw new Error(data?.error_description || "Fallo al marcar ponche");
-  }
+function enviarSalida(){
+  const reporte = (document.getElementById('reporteSalida').value || '').trim();
+  if(!reporte){ alert('Por favor escribe un reporte antes de salir.'); return; }
+
+  const titulo  = \`Reporte de salida - \${(usuarioActual?.NAME||'')} \${(usuarioActual?.LAST_NAME||'')}\`.trim();
+  const mensaje = \`🕒 Reporte generado al marcar salida\\n\\n\${reporte}\`;
+
+  const params = {
+    POST_TITLE: titulo,
+    POST_MESSAGE: mensaje
+  };
+
+  // Visibilidad privada (opcional)
+  const spermU = [];
+  (SUPERVISOR_IDS || []).forEach(uid => { if(uid) spermU.push(String(uid)); });
+  if (spermU.length) params['SPERM[U][]'] = spermU;
+  if (SUPERVISOR_GROUP_ID) params['SPERM[SG][]'] = [String(SUPERVISOR_GROUP_ID)];
+
+  // 1) Crea post privado como el usuario actual
+  BX24.callMethod('log.blogpost.add', params, function(pRes){
+    if(pRes.error()){
+      console.error(pRes.error());
+      alert('❌ No se pudo enviar el reporte a Bitrix.');
+      return;
+    }
+    // 2) Marca salida
+    marcarPonche('salir', /*cerrarLuego*/ true);
+  });
 }
 
-obtenerUsuarioActual();
+function marcarPonche(accion, cerrarLuego){
+  const metodo = (accion === 'ingresar') ? 'timeman.open' : 'timeman.close';
+  BX24.callMethod(metodo, {}, function(mRes){
+    if(mRes.error()){
+      console.error(mRes.error());
+      alert('❌ No se pudo marcar el ponche.');
+      return;
+    }
+    // Refresca estado
+    BX24.callMethod('timeman.status', {}, function(stRes){
+      if(!stRes.error()) render(usuarioActual, stRes.data());
+    });
+    if(accion === 'salir'){
+      if(cerrarLuego) cerrarModal();
+      alert('✅ Reporte enviado y salida marcada');
+    }
+  });
+}
+
+cargar();
 </script>
 
 </body>
