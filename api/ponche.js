@@ -29,7 +29,7 @@ export default function handler(req, res) {
 <body>
  <div class="Ponche-Head">
     <div>
-    <img src="Logo.png" alt="Logo Chezaad" width="200" height="40">
+    <img src="../Logo.png" alt="Logo Chezaad" width="200" height="40">
     <p>Mostrando estado de la jornada de todos los empleados activos</p>
   </div>
    <div styles="">
